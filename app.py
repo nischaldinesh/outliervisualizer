@@ -165,9 +165,18 @@ with col2:
 # --- Heatmap + Colormap ---
 with col3:
     st.markdown("<div class='highlight-header'>Visualization Techniques</div>", unsafe_allow_html=True)
-    heatmap_values = ["raw", "threshold", "interpolated", "binary", "ranked"]
-    st.radio(label="", options=heatmap_values, key="heatmap_type", label_visibility="collapsed",
-             format_func=lambda x: x.capitalize())
+
+    left_col, mid_col, right_col = st.columns([1, 6, 1])
+    with mid_col:
+        heatmap_values = ["raw", "threshold", "interpolated", "binary", "ranked"]
+        st.radio(
+            label="",
+            options=heatmap_values,
+            key="heatmap_type",
+            label_visibility="collapsed",
+            format_func=lambda x: x.capitalize()
+        )
+
 
 colormap_options = ["viridis", "plasma", "terrain", "coolwarm", "turbo", "cividis"]
 
