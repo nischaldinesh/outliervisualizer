@@ -1,27 +1,5 @@
 # OutlierVisualizer
 
-A **comparative dashboard** for visualizing and comparing the outputs of multiple outlier detection algorithms on your dataset, built with Streamlit.
-
----
-
-## Features
-
-- **Interactive Dataset Selection**: Choose from pre‑loaded datasets or add your own CSV files.
-- **Algorithm Selection**: Pick up to two algorithms per category (Proximity‑based, Probabilistic, Ensembles, Linear Models).
-- **Heatmap Visualization**: Display raw, thresholded, interpolated, binary, or ranked outlier scores across a 2D PCA projection.
-- **Custom Colormaps**: Preview and apply multiple Matplotlib colormaps.
-- **One‑click Deployment**: Instructions for running locally or hosting on Streamlit Community Cloud.
-
----
-
-## Prerequisites
-
-- **Python 3.8+**
-- **Git**
-- **pip** (or **pipenv** / **poetry**)
-
----
-
 ## Clone the Repository
 
 ```bash
@@ -77,25 +55,3 @@ outliervisualizer/
 │   └── dataset_loader.py
 └── README.md             # This file
 ```
-
----
-
-## Deploying to Streamlit Community Cloud
-
-1. Push your code to GitHub (ensure `requirements.txt` and `datasets/` are included).
-2. Sign in at [https://share.streamlit.io](https://share.streamlit.io).
-3. Click **New app**, select your repo and branch, and point at `app.py`.
-4. Click **Deploy** and share your live URL.
-
----
-
-## Contributing
-
-Contributions, issues, and feature requests are welcome! Feel free to open a pull request.
-
----
-
-## License
-
-This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
-
