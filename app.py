@@ -17,7 +17,7 @@ st.set_page_config(page_title="Outlier Dashboard", layout="wide")
 # --- Styling ---
 st.markdown("""
 <h1 style='text-align: center; color: black; font-size: 32px; margin:1rem 0 1rem 0;'>
-    OutlierVisualizer: A Comparative Dashboard for Outlier Detection Algorithms
+    Outlier Visualizer: A Dashboard for Comparative Analysis of Outlier Detection Algorithms
 </h1>
 <style>
     [data-testid="stSidebar"], [data-testid="stSidebarNav"], [data-testid="stToolbar"] { display: none !important; }
