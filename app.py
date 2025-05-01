@@ -39,26 +39,18 @@ st.markdown("""
         line-height: 1.2;
     }
     .algo-group strong { color: white; font-size: 16px; }
-    .stButton>button {
-        height: 2.8rem; width: 100%;
-        font-weight: 500; background-color: #3b82f6; color: white;
+    .stButton > button {
+        height: 2.8rem;
+        font-weight: 500;
+        background-color: #3b82f6;
+        color: white;
         border-radius: 0 !important;
+        width: 30% !important;
+        display: block;
+        margin: 60px auto 0 auto !important;
     }
-    .stButton>button[key="continue_btn"] {
-        border-radius: 12px !important;
-        margin-top: 20px !important;
-        width: 40% !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-    }
-            
-    .small-header {
-            padding" 4px 6px !important;
-            font-size: 14px !important;
-            margin-bottom: 4px !important;}
 </style>
 """, unsafe_allow_html=True)
-
 
 # --- Caching ---
 @st.cache_data(show_spinner=False)
@@ -71,19 +63,15 @@ def load_cached_dataset(name):
 def get_pca_coords(X):
     X2 = PCA(n_components=2).fit_transform(X)
     X2 = X2 / np.max(np.abs(X2)) + np.random.normal(0, 0.015, size=X2.shape)
-
     xpad = np.ptp(X2[:, 0]) * 0.1
     ypad = np.ptp(X2[:, 1]) * 0.1
-
     x_min, x_max = X2[:, 0].min() - xpad, X2[:, 0].max() + xpad
     y_min, y_max = X2[:, 1].min() - ypad, X2[:, 1].max() + ypad
-
     return X2, (x_min, x_max), (y_min, y_max)
 
 @st.cache_data(show_spinner=False)
 def get_scores_cached(algo, X):
     return run_algorithm(algo, X)
-
 
 # --- Session state defaults ---
 for key, default in [
@@ -112,7 +100,6 @@ with col1:
         "Bank", "BeijingClimate", "Breast-cancer-wisconsin", "CardioIsomap", "CoilDensmap",
         "Iris", "Nhanes", "ObesityDataSet", "PIRSensor"
     ], key="dataset_select")
-
     if dataset and st.session_state.get("dataset") != dataset:
         st.session_state["confirmed"] = False
         st.session_state["algorithms"] = {}
@@ -121,12 +108,10 @@ with col1:
         for group, algos in categories.items():
             for algo in algos:
                 st.session_state[f"{group}-{algo}"] = False
-
         X = load_cached_dataset(dataset)
         X2d, xlim, ylim = get_pca_coords(X)
         st.session_state["pca"] = {"X2d": X2d, "xlim": xlim, "ylim": ylim}
         st.session_state["dataset"] = dataset
-
     if "pca" in st.session_state:
         X2d = st.session_state["pca"]["X2d"]
         xlim = st.session_state["pca"]["xlim"]
@@ -139,73 +124,53 @@ with col1:
         ax.set_title(f"PCA Scatter of {dataset}")
         st.pyplot(fig, use_container_width=True)
 
-
-algo_full_names = {
-    "CBLOF":  "Clustering-Based Local Outlier Factor",
-    "HBOS":   "Histogram-based Outlier Score",
-    "KNN":    "K-Nearest Neighbors",
-    "LOF":    "Local Outlier Factor",
-    "DBSCA":  "Density-Based Spatial Clustering of Applications with Noise (DBSCAN)",
-    "ABOD":   "Angle-Based Outlier Detection",
-    "GMM":    "Gaussian Mixture Model",
-    "KDE":    "Kernel Density Estimation",
-    "ECOD":   "Empirical Cumulative Distribution for Outlier Detection",
-    "COPOD":  "Copula-Based Outlier Detection",
-    "FB":     "Feature Bagging",
-    "IForest":"Isolation Forest",
-    "LSCP":   "Locally Selective Combination of Parallel Outlier Ensembles",
-    "INNE":   "Isolation-based Nearest-Neighbor Ensembles",
-    "MCD":    "Minimum Covariance Determinant",
-    "OCSVM":  "One-Class Support Vector Machine",
-    "PCA":    "Principal Component Analysis",
-    "LMDD":   "Deviation-based Outlier Detection",
-    "DBSCAN": "Density-Based Spatial Clustering of Applications with Noise"
-}
-
-# --- Algorithm Selection ---
+# --- Algorithm Selection & Explore ---
 with col2:
     st.markdown("<div class='highlight-header'>Algorithm Selection</div>", unsafe_allow_html=True)
     inner = st.columns(len(categories))
-
     for i, (group, algos) in enumerate(categories.items()):
         with inner[i]:
-            st.markdown(
-                f"<div class='algo-group'><strong>{group}</strong></div>",
-                unsafe_allow_html=True
-            )
+            st.markdown(f"<div class='algo-group'><strong>{group}</strong></div>", unsafe_allow_html=True)
             selected_count = sum(
                 st.session_state.get(f"{group}-{algo}", False)
                 for algo in algos
             )
-
             for algo in algos:
                 key = f"{group}-{algo}"
-                full = algo_full_names.get(algo, "")
+                full = algo
                 checked = st.session_state.get(key, False)
                 disabled = (selected_count >= 2 and not checked)
+                st.checkbox(label=algo, key=key, help=full, disabled=disabled)
 
-                st.checkbox(
-                    label=algo,
-                    key=key,
-                    help=full,
-                    disabled=disabled
-                )
+    explore_disabled = not (
+        st.session_state.get("dataset_select") and
+        st.session_state.get("heatmap_type") and
+        st.session_state.get("colormap") and
+        all(
+            sum(st.session_state.get(f"{group}-{algo}", False) for algo in algos) == 2
+            for group, algos in categories.items()
+        )
+    )
+    st.button(
+        "Explore", key="continue_btn", disabled=explore_disabled,
+        on_click=lambda: st.session_state.update({
+            "confirmed": True,
+            "algorithms": {
+                key_map[group]: [algo for algo in algos if st.session_state.get(f"{group}-{algo}", False)]
+                for group, algos in categories.items()
+            }
+        })
+    )
 
 # --- Heatmap + Colormap ---
 with col3:
     st.markdown("<div class='highlight-header'>Visualization Techniques</div>", unsafe_allow_html=True)
-
     heatmap_values = ["raw", "threshold", "interpolated", "binary", "ranked"]
-    st.radio(
-        label="",
-        options=heatmap_values,
-        key="heatmap_type",
-        label_visibility="collapsed",
-        format_func=lambda x: x.capitalize()
-    )
-
+    st.radio(label="", options=heatmap_values, key="heatmap_type", label_visibility="collapsed",
+             format_func=lambda x: x.capitalize())
 
 colormap_options = ["viridis", "plasma", "terrain", "coolwarm", "turbo", "cividis"]
+
 
 for cmap in colormap_options:
     key = f"cb_{cmap}"
@@ -298,31 +263,6 @@ with col4:
                 st.pyplot(fig, use_container_width=True)
                 plt.close(fig)
 
-
-# --- Explore Button ---
-explore_disabled = not (
-    st.session_state.get("dataset_select") and
-    st.session_state.get("heatmap_type") and
-    st.session_state.get("colormap") and
-    all(
-        sum([
-            st.session_state.get(f"{group}-{algo}", False)
-            for algo in algos
-        ]) == 2 for group, algos in categories.items()
-    )
-)
-
-_, mid, _ = st.columns([1, 1, 1])
-with mid:
-    st.button("Explore", key="continue_btn", disabled=explore_disabled,
-        on_click=lambda: st.session_state.update({
-            "confirmed": True,
-            "algorithms": {
-                key_map[group]: [
-                    algo for algo in algos if st.session_state.get(f"{group}-{algo}", False)
-                ] for group, algos in categories.items()
-            }
-        }))
 
 
 # --- Visualization ---
