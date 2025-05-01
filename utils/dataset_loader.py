@@ -1,11 +1,13 @@
 import pandas as pd
 import os
 
-HERE = os.path.dirname(os.path.abspath(__file__))           # …/outliervisualizer/utils
-REPO_ROOT = os.path.abspath(os.path.join(HERE, os.pardir))  # …/outliervisualizer
-DATA_DIR = os.path.join(REPO_ROOT, "datasets")
+# ─ locate the repo root no matter where this file is run from ──────
+HERE       = os.path.abspath(os.path.dirname(__file__))      # …/outliervisualizer/utils
+REPO_ROOT  = os.path.dirname(HERE)                          # …/outliervisualizer
+DATA_DIR   = os.path.join(REPO_ROOT, "datasets")            # …/outliervisualizer/datasets
 
 def load_dataset(name: str) -> pd.DataFrame:
+    # build the CSV path relative to this repo
     csv_path = os.path.join(DATA_DIR, f"{name}.csv")
     if not os.path.isfile(csv_path):
         raise ValueError(f"Dataset file not found: {csv_path}")
