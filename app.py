@@ -192,7 +192,7 @@ with col2:
 
 # --- Heatmap + Colormap ---
 with col3:
-    st.markdown("<div class='highlight-header'>Heatmap Techniques</div>", unsafe_allow_html=True)
+    st.markdown("<div class='highlight-header'>Visualization Techniques</div>", unsafe_allow_html=True)
 
     heatmap_values = ["raw", "threshold", "interpolated", "binary", "ranked"]
     st.radio(
