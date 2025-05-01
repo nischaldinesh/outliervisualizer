@@ -3,7 +3,6 @@
 ## Clone the Repository
 
 ```bash
-# replace <username> with your GitHub handle
 git clone https://github.com/nischaldinesh/outliervisualizer.git
 cd outliervisualizer
 ```
