@@ -158,7 +158,8 @@ algo_full_names = {
     "MCD":    "Minimum Covariance Determinant",
     "OCSVM":  "One-Class Support Vector Machine",
     "PCA":    "Principal Component Analysis",
-    "LMDD":   "Deviation-based Outlier Detection (LMDD)"
+    "LMDD":   "Deviation-based Outlier Detection",
+    "DBSCAN": "Density-Based Spatial Clustering of Applications with Noise"
 }
 
 # --- Algorithm Selection ---
