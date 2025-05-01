@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))           # …/outliervisualizer/utils
 REPO_ROOT = os.path.abspath(os.path.join(HERE, os.pardir))  # …/outliervisualizer
