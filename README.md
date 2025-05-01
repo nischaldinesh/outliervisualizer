@@ -4,7 +4,7 @@
 
 ```bash
 # replace <username> with your GitHub handle
-git clone https://github.com/<username>/outliervisualizer.git
+git clone https://github.com/nischaldinesh/outliervisualizer.git
 cd outliervisualizer
 ```
 
@@ -15,7 +15,7 @@ cd outliervisualizer
 1. **Create a virtual environment** (recommended):
     ```bash
     python -m venv venv
-    source venv/bin/activate    # On Windows: venv\Scripts\activate
+    source venv/bin/activate
     ```
 
 2. **Install dependencies**:
@@ -25,7 +25,7 @@ cd outliervisualizer
     ```
 
 3. **Add your datasets**
-    - Place any CSV files in the `datasets/` folder. Filenames should match the keys used in the app (e.g. `Bank.csv`, `Iris.csv`, etc.).
+    - Place any CSV files in the `datasets/` folder. Filenames should match the keys used in the app.
 
 ---
 
@@ -45,13 +45,12 @@ Open your browser to [http://localhost:8501](http://localhost:8501) to explore t
 
 ```
 outliervisualizer/
-├── app.py                # Main Streamlit application
-├── requirements.txt      # Python dependencies
-├── datasets/             # Example CSV datasets
+├── app.py                
+├── requirements.txt      
+├── datasets/             
 │   ├── Bank.csv
 │   └── Iris.csv
-├── utils/                # Helper modules
+├── utils/                
 │   ├── algorithm_runner.py
-│   └── dataset_loader.py
-└── README.md             # This file
+│   └── dataset_loader.py            
 ```
