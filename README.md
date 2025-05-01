@@ -1,4 +1,4 @@
-# OutlierVisualizer
+# Outlier Visualizer
 
 ## Clone the Repository
 
