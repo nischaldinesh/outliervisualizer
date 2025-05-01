@@ -1,4 +1,18 @@
 import pandas as pd
+
+HERE = os.path.dirname(os.path.abspath(__file__))           # …/outliervisualizer/utils
+REPO_ROOT = os.path.abspath(os.path.join(HERE, os.pardir))  # …/outliervisualizer
+DATA_DIR = os.path.join(REPO_ROOT, "datasets")
+
+def load_dataset(name: str) -> pd.DataFrame:
+    csv_path = os.path.join(DATA_DIR, f"{name}.csv")
+    if not os.path.isfile(csv_path):
+        raise ValueError(f"Dataset file not found: {csv_path}")
+    try:
+        return pd.read_csv(csv_path)
+    except Exception as e:
+        raise ValueError(f"Failed to load dataset {name} from {csv_path}: {e}")
+
 def load_dataset(name):
     try:
         if name == "AirQualityUCI":
