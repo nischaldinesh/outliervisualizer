@@ -69,14 +69,25 @@ def load_cached_dataset(name):
 
 @st.cache_data(show_spinner=False)
 def get_pca_coords(X):
+    # 1) Project to 2D
     X2 = PCA(n_components=2).fit_transform(X)
+    # 2) Normalize & jitter
     X2 = X2 / np.max(np.abs(X2)) + np.random.normal(0, 0.015, size=X2.shape)
-    xpad, ypad = (X2[:, 0].ptp() * 0.1, X2[:, 1].ptp() * 0.1)
-    return X2, (X2[:, 0].min() - xpad, X2[:, 0].max() + xpad), (X2[:, 1].min() - ypad, X2[:, 1].max() + ypad)
+
+    # 3) Compute padding via np.ptp()
+    xpad = np.ptp(X2[:, 0]) * 0.1
+    ypad = np.ptp(X2[:, 1]) * 0.1
+
+    # 4) Build axis limits
+    x_min, x_max = X2[:, 0].min() - xpad, X2[:, 0].max() + xpad
+    y_min, y_max = X2[:, 1].min() - ypad, X2[:, 1].max() + ypad
+
+    return X2, (x_min, x_max), (y_min, y_max)
 
 @st.cache_data(show_spinner=False)
 def get_scores_cached(algo, X):
     return run_algorithm(algo, X)
+
 
 # --- Session state defaults ---
 for key, default in [
