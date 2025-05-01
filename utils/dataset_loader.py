@@ -4,13 +4,17 @@ def load_dataset(name):
     try:
         if name == "AirQualityUCI":
             df = pd.read_csv("datasets/AirQualityUCI.csv", sep=';', decimal=',')
-            df = df.iloc[:, :-2]  # Drop last two empty columns
+            df = df.iloc[:, :-2]  
             return df
         elif name == "Bank":
-            df = pd.read_csv("datasets/Bank.csv", sep=';')  # semicolon separator
+            df = pd.read_csv("datasets/Bank.csv", sep=';')  
             return df
         elif name == "BeijingClimate":
             return pd.read_csv("datasets/BeijingClimate.csv")
+        elif name == "CardioIsomap":
+             return pd.read_json("datasets/CardioIsomap.json")
+        elif name == "CoilDensmap":
+             return pd.read_json("datasets/CoilDensmap.json")
         elif name == "Nhanes":
             return pd.read_csv("datasets/Nhanes.csv")
         elif name == "Students":

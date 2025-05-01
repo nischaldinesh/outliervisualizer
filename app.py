@@ -7,29 +7,37 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.impute import SimpleImputer
 from scipy.interpolate import RBFInterpolator
 from scipy.ndimage import gaussian_filter
-
+import io
+from PIL import Image
 from utils.dataset_loader import load_dataset
 from utils.algorithm_runner import run_algorithm
 
 st.set_page_config(page_title="Outlier Dashboard", layout="wide")
 
 # --- Styling ---
-#---"AirQualityUCI"
 st.markdown("""
-<h1 style='text-align: center; color: white; font-size: 32px; margin-bottom: 1rem;'>
+<h1 style='text-align: center; color: black; font-size: 32px; margin:1rem 0 1rem 0;'>
     OutlierVisualizer: A Comparative Dashboard for Outlier Detection Algorithms
 </h1>
 <style>
     [data-testid="stSidebar"], [data-testid="stSidebarNav"], [data-testid="stToolbar"] { display: none !important; }
     .block-container { padding: 1rem !important; }
-    .highlight-header { background-color: #3b82f6; color: white; padding: 8px 10px; font-weight: 600; font-size: 18px; margin-bottom: 4px; }
+    .highlight-header {
+        background-color: #3b82f6;
+        color: white;
+        padding: 8px 10px;
+        font-weight: 600;
+        font-size: 18px;
+        margin-bottom: 4px;
+        text-align: center;
+    }
     .algo-group {
-    background-color: #717D7E;
-    padding: 4px 8px;
-    border-radius: 4px;
-    margin-bottom: 6px;
-    line-height: 1.2;
-}
+        background-color: #717D7E;
+        padding: 4px 8px;
+        border-radius: 4px;
+        margin-bottom: 6px;
+        line-height: 1.2;
+    }
     .algo-group strong { color: white; font-size: 16px; }
     .stButton>button {
         height: 2.8rem; width: 100%;
@@ -43,8 +51,14 @@ st.markdown("""
         margin-left: auto !important;
         margin-right: auto !important;
     }
+            
+    .small-header {
+            padding" 4px 6px !important;
+            font-size: 14px !important;
+            margin-bottom: 4px !important;}
 </style>
 """, unsafe_allow_html=True)
+
 
 # --- Caching ---
 @st.cache_data(show_spinner=False)
@@ -74,7 +88,7 @@ for key, default in [
 
 # --- Category setup ---
 categories = {
-    "Proximity-based": ["CBLOF", "HBOS", "KNN", "LOF", "DBSCA"],
+    "Proximity-based": ["CBLOF", "HBOS", "KNN", "LOF", "DBSCAN"],
     "Probabilistic": ["ABOD", "GMM", "KDE", "ECOD", "COPOD"],
     "Ensembles": ["FB", "IForest", "LSCP", "INNE"],
     "Linear Models": ["MCD", "OCSVM", "PCA", "LMDD"]
@@ -88,7 +102,7 @@ col1, col2, col3, col4 = st.columns([2, 4, 1.5, 1.5])
 with col1:
     st.markdown("<div class='highlight-header'>Dataset Selection</div>", unsafe_allow_html=True)
     dataset = st.selectbox("Choose Dataset", [
-        "Bank", "BeijingClimate", "Breast-cancer-wisconsin",
+        "Bank", "BeijingClimate", "Breast-cancer-wisconsin", "CardioIsomap", "CoilDensmap",
         "Iris", "Nhanes", "ObesityDataSet", "PIRSensor"
     ], key="dataset_select")
 
@@ -118,28 +132,164 @@ with col1:
         ax.set_title(f"PCA Scatter of {dataset}")
         st.pyplot(fig, use_container_width=True)
 
+
+algo_full_names = {
+    "CBLOF":  "Clustering-Based Local Outlier Factor",
+    "HBOS":   "Histogram-based Outlier Score",
+    "KNN":    "K-Nearest Neighbors",
+    "LOF":    "Local Outlier Factor",
+    "DBSCA":  "Density-Based Spatial Clustering of Applications with Noise (DBSCAN)",
+    "ABOD":   "Angle-Based Outlier Detection",
+    "GMM":    "Gaussian Mixture Model",
+    "KDE":    "Kernel Density Estimation",
+    "ECOD":   "Empirical Cumulative Distribution for Outlier Detection",
+    "COPOD":  "Copula-Based Outlier Detection",
+    "FB":     "Feature Bagging",
+    "IForest":"Isolation Forest",
+    "LSCP":   "Locally Selective Combination of Parallel Outlier Ensembles",
+    "INNE":   "Isolation-based Nearest-Neighbor Ensembles",
+    "MCD":    "Minimum Covariance Determinant",
+    "OCSVM":  "One-Class Support Vector Machine",
+    "PCA":    "Principal Component Analysis",
+    "LMDD":   "Deviation-based Outlier Detection (LMDD)"
+}
+
 # --- Algorithm Selection ---
 with col2:
     st.markdown("<div class='highlight-header'>Algorithm Selection</div>", unsafe_allow_html=True)
     inner = st.columns(len(categories))
+
     for i, (group, algos) in enumerate(categories.items()):
         with inner[i]:
-            st.markdown(f"<div class='algo-group'><strong>{group}</strong></div>", unsafe_allow_html=True)
-            selected_count = 0
+            st.markdown(
+                f"<div class='algo-group'><strong>{group}</strong></div>",
+                unsafe_allow_html=True
+            )
+            selected_count = sum(
+                st.session_state.get(f"{group}-{algo}", False)
+                for algo in algos
+            )
+
             for algo in algos:
-                if st.checkbox(label=algo, key=f"{group}-{algo}"):
-                    selected_count += 1
-            if selected_count != 2:
-                st.markdown("<span style='color:#facc15; font-size:13px;'>⚠️ Pick 2 algorithms</span>", unsafe_allow_html=True)
+                key = f"{group}-{algo}"
+                full = algo_full_names.get(algo, "")
+                checked = st.session_state.get(key, False)
+                disabled = (selected_count >= 2 and not checked)
+
+                st.checkbox(
+                    label=algo,
+                    key=key,
+                    help=full,
+                    disabled=disabled
+                )
 
 # --- Heatmap + Colormap ---
 with col3:
     st.markdown("<div class='highlight-header'>Heatmap Techniques</div>", unsafe_allow_html=True)
-    st.radio("", ["raw", "threshold", "interpolated", "binary", "ranked"], key="heatmap_type", label_visibility="collapsed", index=None)
+
+    heatmap_values = ["raw", "threshold", "interpolated", "binary", "ranked"]
+    st.radio(
+        label="",
+        options=heatmap_values,
+        key="heatmap_type",
+        label_visibility="collapsed",
+        format_func=lambda x: x.capitalize()
+    )
+
+
+colormap_options = ["viridis", "plasma", "terrain", "coolwarm", "turbo", "cividis"]
+
+for cmap in colormap_options:
+    key = f"cb_{cmap}"
+    if key not in st.session_state:
+        st.session_state[key] = False
+
+def _select_colormap(cmap):
+    for o in colormap_options:
+        st.session_state[f"cb_{o}"] = False
+    st.session_state[f"cb_{cmap}"] = True
+    st.session_state["colormap"] = cmap
+
 
 with col4:
-    st.markdown("<div class='highlight-header'>Colormap</div>", unsafe_allow_html=True)
-    st.radio("Select Colormap", ["viridis", "plasma", "terrain", "coolwarm", "turbo"], index=None, key="colormap")
+    st.markdown(
+        "<div class='highlight-header' style='text-align:center; margin-bottom:8px;'>Colormap</div>",
+        unsafe_allow_html=True
+    )
+
+    colormap_options = ["viridis", "plasma", "terrain", "coolwarm", "turbo", "cividis"]
+
+
+    for row in range(3):
+        cb1_col, img1_col, cb2_col, img2_col = st.columns([0.15, 0.85, 0.15, 0.85])
+
+        idx1 = row * 2
+        if idx1 < len(colormap_options):
+            cmap1 = colormap_options[idx1]
+            key1 = f"cb_{cmap1}"
+
+            with cb1_col:
+                st.checkbox(
+                    label="",
+                    key=key1,
+                    label_visibility="collapsed",
+                    on_change=_select_colormap,
+                    args=(cmap1,)
+                )
+
+            with img1_col:
+                gradient = np.linspace(0, 1, 256).reshape(1, -1)
+                fig, ax = plt.subplots(figsize=(1.0, 0.40), dpi=100)
+                ax.imshow(gradient, aspect="auto", cmap=cmap1)
+                ax.axis("off")
+
+               
+                fig.subplots_adjust(left=0, right=1, top=1, bottom=0.2)
+                ax.text(
+                    0.5, -0.08,
+                    cmap1,
+                    transform=ax.transAxes,
+                    ha="center", va="top",
+                    fontsize=12
+                )
+
+                
+                st.pyplot(fig, use_container_width=True)
+                plt.close(fig)
+
+        
+        idx2 = row * 2 + 1
+        if idx2 < len(colormap_options):
+            cmap2 = colormap_options[idx2]
+            key2 = f"cb_{cmap2}"
+
+            with cb2_col:
+                st.checkbox(
+                    label="",
+                    key=key2,
+                    label_visibility="collapsed",
+                    on_change=_select_colormap,
+                    args=(cmap2,)
+                )
+
+            with img2_col:
+                gradient = np.linspace(0, 1, 256).reshape(1, -1)
+                fig, ax = plt.subplots(figsize=(1.0, 0.40), dpi=100)
+                ax.imshow(gradient, aspect="auto", cmap=cmap2)
+                ax.axis("off")
+
+                fig.subplots_adjust(left=0, right=1, top=1, bottom=0.2)
+                ax.text(
+                    0.5, -0.08,
+                    cmap2,
+                    transform=ax.transAxes,
+                    ha="center", va="top",
+                    fontsize=12
+                )
+
+                st.pyplot(fig, use_container_width=True)
+                plt.close(fig)
+
 
 # --- Explore Button ---
 explore_disabled = not (
@@ -166,6 +316,7 @@ with mid:
             }
         }))
 
+
 # --- Visualization ---
 if st.session_state.get("confirmed") and st.session_state.get("heatmap_type"):
     X = StandardScaler().fit_transform(load_cached_dataset(st.session_state["dataset"]))
@@ -175,7 +326,6 @@ if st.session_state.get("confirmed") and st.session_state.get("heatmap_type"):
 
     def render_heatmap(X2d, scores, method, cmap, title):
         scores = (scores - scores.min()) / (scores.max() - scores.min() + 1e-8)
-
         if method == "threshold":
             scores = (scores >= np.percentile(scores, 95)).astype(float)
         elif method == "binary":
@@ -191,40 +341,56 @@ if st.session_state.get("confirmed") and st.session_state.get("heatmap_type"):
         if method in ["threshold", "interpolated", "ranked"]:
             zz = gaussian_filter(zz, sigma=1.5)
 
+    
         fig, ax = plt.subplots()
         ax.contourf(xx, yy, zz, levels=60, cmap=cmap)
         ax.scatter(X2d[:,0], X2d[:,1], s=4, c="black", alpha=0.6)
         ax.set_xticks([]); ax.set_yticks([])
         ax.set_xlim(xlim); ax.set_ylim(ylim)
-        ax.set_title(title, fontsize=8, color="white")
+        ax.set_title(title, fontsize=12, color="black")
         fig.patch.set_facecolor("none")
         return fig
 
-    cols = st.columns([1,1,1,1,0.3])
+    cols = st.columns([1, 1, 1, 1, 0.3])
     cat_order = list(categories.keys())
     idx_map = {cat: i for i, cat in enumerate(cat_order)}
 
     for cat in cat_order:
-        for algo in st.session_state["algorithms"].get(key_map[cat], []):
-            with cols[idx_map[cat]]:
+        with cols[idx_map[cat]]:
+            st.markdown(
+                f"<div style='text-align:center; margin-bottom:4px;'><strong>{cat}</strong></div>",
+                unsafe_allow_html=True
+            )
+
+            for algo in st.session_state["algorithms"].get(key_map[cat], []):
                 try:
                     scores = get_scores_cached(algo, X)
-                    fig = render_heatmap(X2d, scores, st.session_state["heatmap_type"],
-                                         st.session_state["colormap"], algo)
+                    fig = render_heatmap(
+                        X2d,
+                        scores,
+                        st.session_state["heatmap_type"],
+                        st.session_state["colormap"],
+                        algo
+                    )
                     st.pyplot(fig, use_container_width=True)
                 except Exception as e:
                     st.error(f"{algo} failed: {e}")
 
     with cols[-1]:
-        fig, ax = plt.subplots(figsize=(0.9, 3.29), dpi=100)
+        fig, ax = plt.subplots(figsize=(0.9, 2.5), dpi=100)
         gradient = np.linspace(0,1,256).reshape(256,1)
-        ax.imshow(gradient[::-1], aspect="auto", cmap=st.session_state["colormap"], extent=[0,1,0,1])
+        ax.imshow(
+            gradient[::-1], aspect="auto",
+            cmap=st.session_state["colormap"],
+            extent=[0,1,0,1]
+        )
         ax.set_xticks([]); ax.set_yticks([])
-        ax.text(0.5, 1.02, "Outlier", transform=ax.transAxes, ha="center", va="bottom", fontsize=6, color="white")
-        ax.text(0.5, -0.02, "Inlier", transform=ax.transAxes, ha="center", va="top", fontsize=6, color="white")
-        for s in ax.spines.values():
-            s.set_visible(False)
-        fig.subplots_adjust(left=0.4, right=0.6, top=1.0, bottom=0.0)
+        ax.text(0.5, 1.02, "Outlier", transform=ax.transAxes,
+                ha="center", va="bottom", fontsize=6)
+        ax.text(0.5, -0.02, "Inlier", transform=ax.transAxes,
+                ha="center", va="top", fontsize=6)
+        for s in ax.spines.values(): s.set_visible(False)
+        fig.subplots_adjust(left=0.4, right=0.6, top=1.1, bottom=0.05)
         fig.patch.set_facecolor("none")
         st.pyplot(fig, use_container_width=False)
 

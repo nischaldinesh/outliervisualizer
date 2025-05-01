@@ -22,7 +22,6 @@ from pyod.models.lmdd import LMDD
 
 import numpy as np
 
-# LSCP and FeatureBagging need base models
 def get_base_models(X, model_cls, n=5):
     return [model_cls() for _ in range(n)]
 
@@ -39,8 +38,15 @@ def run_algorithm(name, X):
     elif name == "LOF":
         model = LOF()
     elif name == "DBSCAN":
-        labels = DBSCAN().fit_predict(X)
-        return np.where(labels == -1, 1.0, 0.0)
+        try:
+            model = DBSCAN()
+            labels = model.fit_predict(X)
+            scores = np.where(labels == -1, 1.0, 0.0)  
+            print(f"[DBSCAN] #outliers: {(scores == 1.0).sum()} / {len(scores)}")
+            return scores
+        except Exception as e:
+            print(f"[DBSCAN ERROR] -> {e}")
+            return np.zeros(len(X))
 
     elif name == "ABOD":
         model = ABOD(n_neighbors=20)
@@ -74,6 +80,7 @@ def run_algorithm(name, X):
         model = MCD()
     elif name == "LMDD":
         model = LMDD()
+
     else:
         raise ValueError(f"Unknown algorithm: {name}")
 
